@@ -162,9 +162,9 @@ An array of module group objects. Each object defines a distinct prerendering ta
 | ---------------- | -------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `renderFunction` | `(data: Object) => string` | **Yes**      | A function that receives loaded data and returns an HTML string. The data object's keys are derived from the filenames in dataModules.                            |
 | `selector`       | `string`                   | **Yes**      | The CSS query selector to identify the target DOM element(s) to be replaced.                                                                                      |
-| `dataModules`    | `string[]`                 | **No**       | A path or array of paths to data modules (.json, .js). The default export of each module will be passed to renderFunction.                                        |
-| `pathIsolate`    | `string[]`                 | **No**       | An array of file paths to exclusively apply this render rule to. The root directory is the same as your Vite project root (e.g., /index.html, /pages/about.html). |
-| `pathIgnore`     | `string[]`                 | **No**       | An array of file paths to ignore for this render rule.                                                                                                            |
+| `dataModules`    | `string \| string[]`       | **No**       | A path or array of paths to data modules (.json, .js). The default export of each module will be passed to renderFunction.                                        |
+| `pathIsolate`    | `string \| string[]`       | **No**       | An array of file paths to exclusively apply this render rule to. The root directory is the same as your Vite project root (e.g., /index.html, /pages/about.html). |
+| `pathIgnore`     | `string \| string[]`       | **No**       | An array of file paths to ignore for this render rule.                                                                                                            |
 | `outer`          | `boolean`                  | **No**       | If true, replaces the element's outerHTML. If false (default), it replaces the innerHTML.                                                                         |
 
 ## License
