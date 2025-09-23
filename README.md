@@ -1,4 +1,4 @@
-# vite-vanilla-prerenderer
+# vite-plugin-html-prerenderer
 
 Vite plugin that prerenders HTML at build time and during development. Ideal for vanilla JS projects or static sites where you need to inject dynamically generated content (e.g., from JSON files) directly into your HTML without a client-side framework.
 
@@ -17,17 +17,17 @@ This allows you to maintain clean data files, generate complex HTML structures, 
 
 ```
 # Using npm
-npm install vite-vanilla-prerenderer --save-dev
+npm install vite-plugin-html-prerenderer --save-dev
 ```
 
 ```
 # Using yarn
-yarn add vite-vanilla-prerenderer --dev
+yarn add vite-plugin-html-prerenderer --dev
 ```
 
 ```
 # Using pnpm
-pnpm add -D vite-vanilla-prerenderer
+pnpm add -D vite-plugin-html-prerenderer
 ```
 
 ## Basic Usage
@@ -40,7 +40,7 @@ pnpm add -D vite-vanilla-prerenderer
 
 ```
 import { defineConfig } from 'vite';
-import viteVanillaPrerenderer from 'vite-vanilla-prerenderer';
+import viteVanillaPrerenderer from 'vite-plugin-html-prerenderer';
 
 export default defineConfig({
   plugins: [
@@ -103,7 +103,7 @@ The real power of this plugin comes from using external data to generate your HT
 
 ```
 import { defineConfig } from 'vite';
-import viteVanillaPrerenderer from 'vite-vanilla-prerenderer';
+import viteVanillaPrerenderer from 'vite-plugin-html-prerenderer';
 
 // Define the function that will render your data
 function renderProjects(data) {

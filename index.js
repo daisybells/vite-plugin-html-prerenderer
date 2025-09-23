@@ -48,7 +48,7 @@ function viteVanillaPrerenderer(options = {}) {
     const watchedJsonFiles = new Set();
 
     return {
-        name: "vite-vanilla-prerenderer",
+        name: "vite-plugin-html-prerenderer",
         enforce: "post",
         configResolved(config) {
             ({ command } = config);
@@ -62,7 +62,7 @@ function viteVanillaPrerenderer(options = {}) {
                 if (!watchedJsonFiles.has(normalizedFile)) return;
 
                 console.log(
-                    `\n[vite-vanilla-prerenderer] Watched JSON file changed: ${path.relative(
+                    `\n[vite-plugin-html-prerenderer] Watched JSON file changed: ${path.relative(
                         process.cwd(),
                         normalizedFile
                     )}. Restarting server...`
@@ -71,7 +71,7 @@ function viteVanillaPrerenderer(options = {}) {
                     server.restart();
                 } catch (error) {
                     console.error(
-                        `[vite-vanilla-prerenderer] Error restarting server: ${error.message}`
+                        `[vite-plugin-html-prerenderer] Error restarting server: ${error.message}`
                     );
                 }
             });
@@ -174,7 +174,7 @@ function loadModuleDataCurry(
             return [key, data];
         } catch (error) {
             console.error(
-                `[vite-vanilla-prerenderer] ⚠️ Failed to load module ${moduleId}:`,
+                `[vite-plugin-html-prerenderer] ⚠️ Failed to load module ${moduleId}:`,
                 error.message
             );
         }
