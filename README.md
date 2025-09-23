@@ -7,10 +7,11 @@ This allows you to maintain clean data files, generate complex HTML structures, 
 ## Features
 
 -   **Server-Side Rendering**: Injects HTML into your .html files before they are served by Vite's dev server or written to the build output.
--   Data-Driven Content: Use data from local .json or .js modules to dynamically generate content.
--   Live Reloading: Watches your data files and automatically restarts the dev server on change.
--   Route Specific: Apply rendering logic to all pages or isolate it to specific HTML files.
--   Zero Client-Side Overhead: All operations are done at build time or on the server; no client-side JavaScript is added.
+-   **Data-Driven Content**: Use data from local .json or .js modules to dynamically generate content.
+-   **Virtual Module Compatibility**: Module imports have access to Vite's virtual module pipeline.
+-   **Live Reloading**: Watches your data files and automatically restarts the dev server on change.
+-   **Route Specific**: Apply rendering logic to all pages or isolate it to specific HTML files.
+-   **Zero Client-Side Overhead**: All operations are done at build time or on the server; no client-side JavaScript is added.
 
 ## Installation
 
