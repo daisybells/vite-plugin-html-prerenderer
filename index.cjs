@@ -3,6 +3,11 @@
 var jsdom = require('jsdom');
 var path = require('node:path');
 
+const defaultOptions = {
+    rootDirectory: null,
+    moduleGroups: [],
+};
+
 /**
  * Render function that generates an HTML string based on a given input.
  * @callback renderer
@@ -18,8 +23,10 @@ var path = require('node:path');
  *
  *
  *
- * @param {Object} options - Settings to configure prerenderer plugin.
- * @param {Object[]} options.moduleGroups - Input modules for each render function
+ * @param {Object} inputOptions - Settings to configure prerenderer plugin.
+ * @param {import("fs").PathLike} [inputOptions.rootDirectory] - Path to root directory,
+ * if different from config.root.
+ * @param {Object[]} inputOptions.moduleGroups - Input modules for each render function
  * and their specific configurations.
  *
  *
@@ -41,19 +48,25 @@ var path = require('node:path');
  *
  * @returns {import("vite").Plugin} - Vite plugin object.
  */
-function viteVanillaPrerenderer(options = {}) {
-    const moduleGroups = options?.moduleGroups || [];
-    let command;
+function viteVanillaPrerenderer(inputOptions = {}) {
+    const options = { ...defaultOptions, ...inputOptions };
+
+    const { moduleGroups, rootDirectory } = options;
+
     let viteServer;
     let resolveId;
     let loadModule;
     const watchedJsonFiles = new Set();
 
+    let root;
+    let command;
+
     return {
         name: "vite-plugin-html-prerenderer",
         enforce: "post",
-        configResolved(config) {
-            ({ command } = config);
+        configResolved(resolvedConfig) {
+            ({ command } = resolvedConfig);
+            root = rootDirectory || resolvedConfig.root;
         },
         configureServer(server) {
             viteServer = server;
@@ -64,9 +77,8 @@ function viteVanillaPrerenderer(options = {}) {
                 if (!watchedJsonFiles.has(normalizedFile)) return;
 
                 console.log(
-                    `\n[vite-plugin-html-prerenderer] Watched JSON file changed: ${path.relative(
-                        process.cwd(),
-                        normalizedFile
+                    `\n[vite-plugin-html-prerenderer] Watched JSON file changed: ${path.basename(
+                        file
                     )}. Restarting server...`
                 );
                 try {
@@ -84,8 +96,10 @@ function viteVanillaPrerenderer(options = {}) {
         async transformIndexHtml(html, context) {
             if (moduleGroups.length === 0) return html;
 
+            const config = { root, command };
+
             const loadModuleData = loadModuleDataCurry(
-                command,
+                config,
                 viteServer,
                 {
                     resolve: resolveId,
@@ -135,7 +149,7 @@ function viteVanillaPrerenderer(options = {}) {
 }
 
 function loadModuleDataCurry(
-    command,
+    config,
     viteServer,
     pluginContext,
     watchedJsonFiles
@@ -147,25 +161,32 @@ function loadModuleDataCurry(
         const isJsonModule =
             moduleId.endsWith(".json") && !isVirtual && isFilePath;
 
-        if (command === "serve" && isJsonModule) {
-            const resolvedPath = path.resolve(process.cwd(), moduleId);
-            watchedJsonFiles.add(path.normalize(resolvedPath));
+        const pathResolvedModule = isJsonModule
+            ? path.resolve(config.root, moduleId)
+            : moduleId;
+
+        if (config.command === "serve" && isJsonModule) {
+            watchedJsonFiles.add(pathResolvedModule);
         }
 
         try {
-            if (command === "serve") {
-                const module = await viteServer.ssrLoadModule(moduleId);
+            if (config.command === "serve") {
+                const module = await viteServer.ssrLoadModule(
+                    pathResolvedModule
+                );
 
                 const data = module.default || module;
                 return [key, data];
             }
 
-            const resolvedModule = await pluginContext.resolve(moduleId);
+            const pluginResolvedModule = await pluginContext.resolve(
+                pathResolvedModule
+            );
 
-            if (!resolvedModule) return [key, null];
+            if (!pluginResolvedModule) return [key, null];
 
             const loadedModule = await pluginContext.load({
-                id: resolvedModule.id,
+                id: pluginResolvedModule.id,
             });
 
             const module = await import(
@@ -177,7 +198,7 @@ function loadModuleDataCurry(
         } catch (error) {
             console.error(
                 `[vite-plugin-html-prerenderer] ⚠️ Failed to load module ${moduleId}:`,
-                error.message
+                error
             );
         }
 
