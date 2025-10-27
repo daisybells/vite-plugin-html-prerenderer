@@ -210,8 +210,8 @@ function loadModuleDataCurry(
 }
 
 function prerenderModuleCurry(contextPath) {
-    return async (moduleGroup, jsonObjects = {}) => {
-        const { renderFunction, selector, ...options } = moduleGroup;
+    return async (module, jsonObjects = {}) => {
+        const { renderFunction, selector, ...options } = module;
         const { outer, pathIgnore, pathIsolate } = options;
 
         if (typeof renderFunction !== "function" || !selector) return;
