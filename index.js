@@ -210,8 +210,8 @@ function loadModuleDataCurry(
 }
 
 function prerenderModuleCurry(contextPath) {
-    return async (module, jsonObjects = {}) => {
-        const { renderFunction, selector, ...options } = module;
+    return async (moduleGroup, jsonObjects = {}) => {
+        const { renderFunction, selector, ...options } = moduleGroup;
         const { outer, pathIgnore, pathIsolate } = options;
 
         if (typeof renderFunction !== "function" || !selector) return;
@@ -223,8 +223,12 @@ function prerenderModuleCurry(contextPath) {
             ? pathIgnore.filter(Boolean)
             : [pathIgnore].filter(Boolean);
 
-        const isPathToIsolate = pathMatches(contextPath, isolatePaths);
-        const isPathToIgnore = pathMatches(contextPath, ignorePaths);
+        const isPathToIsolate = pathIsolate
+            ? pathMatches(contextPath, isolatePaths)
+            : true;
+        const isPathToIgnore = pathIgnore
+            ? pathMatches(contextPath, ignorePaths)
+            : false;
 
         if (isPathToIgnore || !isPathToIsolate) return;
 
