@@ -11,6 +11,7 @@ const defaultOptions = {
  * @callback renderer
  * @param {Object} jsonObjects - JSON arrays imported from .JSON files specified by
  * options.moduleGroups[].jsonPaths
+ * @param {Object} config - input VITE defineConfig data.
  * @returns {HTML} - Generated output HTML string.
  */
 
@@ -49,15 +50,15 @@ const defaultOptions = {
 function viteVanillaPrerenderer(inputOptions = {}) {
     const options = { ...defaultOptions, ...inputOptions };
 
-    const { moduleGroups, rootDirectory } = options;
+    const { moduleGroups, rootDirectory, pathsIgnore = [] } = options;
 
     let viteServer;
     let resolveId;
     let loadModule;
     const watchedJsonFiles = new Set();
 
-    let root;
     let command;
+    let root;
 
     return {
         name: "vite-plugin-html-prerenderer",
@@ -93,6 +94,11 @@ function viteVanillaPrerenderer(inputOptions = {}) {
         },
         async transformIndexHtml(html, context) {
             if (moduleGroups.length === 0) return html;
+            const { path: contextPath } = context;
+            if (
+                pathsIgnore.some((filePath) => contextPath.startsWith(filePath))
+            )
+                return html;
 
             const config = { root, command };
 
@@ -106,7 +112,7 @@ function viteVanillaPrerenderer(inputOptions = {}) {
                 watchedJsonFiles
             );
 
-            const prerenderModule = prerenderModuleCurry(context.path);
+            const prerenderModule = prerenderModuleCurry(contextPath, config);
 
             const dom = new JSDOM(html);
             const { document } = dom.window;
@@ -118,7 +124,7 @@ function viteVanillaPrerenderer(inputOptions = {}) {
                 for (const moduleGroup of moduleGroups) {
                     const { dataModules } = moduleGroup;
                     if (!dataModules) {
-                        prerenderModule(moduleGroup);
+                        await prerenderModule(moduleGroup);
                         continue;
                     }
                     const dataModulePathArray = Array.isArray(dataModules)
@@ -128,14 +134,13 @@ function viteVanillaPrerenderer(inputOptions = {}) {
                     const dataModulePromises =
                         dataModulePathArray.map(loadModuleData);
 
-                    // eslint-disable-next-line no-await-in-loop
                     const dataEntries = await Promise.all(dataModulePromises);
 
                     const loadedData = Object.fromEntries(
                         dataEntries.filter((entry) => entry[1] !== null)
                     );
 
-                    prerenderModule(moduleGroup, loadedData);
+                    await prerenderModule(moduleGroup, loadedData);
                 }
             } finally {
                 globalThis.document = previousDocument;
@@ -205,8 +210,8 @@ function loadModuleDataCurry(
 }
 
 function prerenderModuleCurry(contextPath) {
-    return (module, jsonObjects = {}) => {
-        const { renderFunction, selector, ...options } = module;
+    return async (moduleGroup, jsonObjects = {}) => {
+        const { renderFunction, selector, ...options } = moduleGroup;
         const { outer, pathIgnore, pathIsolate } = options;
 
         if (typeof renderFunction !== "function" || !selector) return;
@@ -221,34 +226,25 @@ function prerenderModuleCurry(contextPath) {
         const isPathToIsolate = pathMatches(contextPath, isolatePaths);
         const isPathToIgnore = pathMatches(contextPath, ignorePaths);
 
-        if (pathIgnore && isPathToIgnore) return;
-        if (pathIsolate && !isPathToIsolate) return;
+        if (isPathToIgnore || !isPathToIsolate) return;
 
         const elements = document.querySelectorAll(selector);
 
         if (elements.length === 0) return;
 
         for (const element of elements) {
-            const result = renderFunction(jsonObjects);
+            const result = await Promise.resolve(renderFunction(jsonObjects));
             if (outer) element.outerHTML = result;
             else element.innerHTML = result;
         }
     };
 }
 
-/**
- * Check if two file paths are equal to each other.
- *
- * @param {string} contextPath - Current working directory path.
- * @param {string[]} pathsArray - Array of paths to compare to the context path.
- * @returns {Boolean} - Path does or does not match.
- */
 function pathMatches(contextPath, pathsArray) {
     return contextPath && pathsArray
         ? pathsArray.some(
               (filePath) =>
-                  path.normalize(contextPath.toLowerCase()) ===
-                  path.normalize(filePath.toLowerCase())
+                  contextPath.startsWith(filePath) || contextPath === filePath
           )
         : false;
 }
