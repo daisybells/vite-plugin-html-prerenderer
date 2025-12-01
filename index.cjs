@@ -225,8 +225,12 @@ function prerenderModuleCurry(contextPath) {
             ? pathIgnore.filter(Boolean)
             : [pathIgnore].filter(Boolean);
 
-        const isPathToIsolate = pathMatches(contextPath, isolatePaths);
-        const isPathToIgnore = pathMatches(contextPath, ignorePaths);
+        const isPathToIsolate = pathIsolate
+            ? pathMatches(contextPath, isolatePaths)
+            : true;
+        const isPathToIgnore = pathIgnore
+            ? pathMatches(contextPath, ignorePaths)
+            : false;
 
         if (isPathToIgnore || !isPathToIsolate) return;
 
